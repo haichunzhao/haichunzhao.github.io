@@ -1,0 +1,451 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu_union_verify" content="d1952c66cf48912e21c18c7c581f382a">
+  <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
+<meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
+  
+    <title>编译 | 春暖花开</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="haichunzhao">
+    
+    <meta name="description" content="编译过程对预处理过的结果进行词法分析，语法分析，语义分析，然后生成中间代码，并对中间代码进行优化，目标是使最终生成的可执行代码执行时间更短，占用的空间更小，最后生成对应的汇编代码。以foo2.c为例，我们可以使用如下命令指定编译过程只进行编译，不进行汇编和链接。1gcc -S foo2.c
+编译后产">
+    
+    
+    
+    
+    <link rel="alternate" href="atom.xml" title="春暖花开" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            var _bdId ='391982416296a0d54221f59fe35250d4';
+             hm.src = "//hm.baidu.com/hm.js?" + _bdId;
+             var s = document.getElementsByTagName("script")[0]; 
+             s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+     
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="春暖花开">春暖花开</a></h1>
+				<a class="blog-motto"></a>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+					<li>
+					
+                                            <form class="search" action=http://zhannei.baidu.com/cse/search target="_blank">
+                                            <label>Search</label>
+                                        <input name="s" type="hidden" value= null ><input type="text" name="q" size="30" placeholder="搜索"><br>
+					
+					</li>
+				</ul>
+                            </nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2015/01/19/编译/" title="编译" itemprop="url">编译</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://yoursite.com" title="haichunzhao">haichunzhao</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2015-01-19T13:11:52.000Z" itemprop="datePublished">Jan 19 2015</time>
+    更新日期:<time datetime="2015-01-19T14:33:04.000Z" itemprop="dateModified">Jan 19 2015</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目录</strong>
+		
+		</div>
+		
+		<p>编译过程对预处理过的结果进行词法分析，语法分析，语义分析，然后生成中间代码，并对中间代码进行优化，目标是使最终生成的可执行代码执行时间更短，占用的空间更小，最后生成对应的汇编代码。<br>以foo2.c为例，我们可以使用如下命令指定编译过程只进行编译，不进行汇编和链接。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -S foo2.c</span><br></pre></td></tr></table></figure></p>
+<p>编译后产生的汇编文件为foo2.s,其内容如下：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">        .file   <span class="string">"foo2.c"</span></span><br><span class="line">        .globl  foo2</span><br><span class="line">        .data</span><br><span class="line">        .align <span class="number">4</span></span><br><span class="line">        .type   foo2, @object</span><br><span class="line">        .size   foo2, <span class="number">4</span></span><br><span class="line">foo2:</span><br><span class="line">        .long   <span class="number">20</span></span><br><span class="line">        .text</span><br><span class="line">        .globl  foo2_func</span><br><span class="line">        .type   foo2_func, @function</span><br><span class="line">foo2_func:</span><br><span class="line">.LFB0:</span><br><span class="line">        .cfi_startproc</span><br><span class="line">        pushl   %ebp</span><br><span class="line">        .cfi_def_cfa_offset <span class="number">8</span></span><br><span class="line">        .cfi_offset <span class="number">5</span>, -<span class="number">8</span></span><br><span class="line">        movl    %esp, %ebp</span><br><span class="line">        .cfi_def_cfa_register <span class="number">5</span></span><br><span class="line">        subl    $<span class="number">16</span>, %esp</span><br><span class="line">        movl    foo2, %eax</span><br><span class="line">        movl    %eax, -<span class="number">4</span>(%ebp)</span><br><span class="line">        leave</span><br><span class="line">        .cfi_restore <span class="number">5</span></span><br><span class="line">        .cfi_def_cfa <span class="number">4</span>, <span class="number">4</span></span><br><span class="line">        ret</span><br><span class="line">        .cfi_endproc</span><br><span class="line">.LFE0:</span><br><span class="line">        .size   foo2_func, .-foo2_func</span><br><span class="line">        .ident  <span class="string">"GCC: (Ubuntu 4.8.2-19ubuntu1) 4.8.2"</span></span><br><span class="line">        .section        .note.GNU-stack,<span class="string">""</span>,@progbits</span><br></pre></td></tr></table></figure></p>
+<p>在文件foo2.c中，除定义了一个全局变量foo2外，仅定义了一个函数foo2_func,而该函数体中也只有区区一行代码，但为什么产生的汇编代码如此之长？事实上，仔细观察可以发现，文件foo2.s中相当一部分是汇编器的伪指令。伪指令不参与cpu运行的，只指导编译链接过程。比如代码中以.cfi开头的伪指令是辅助汇编器创建栈帧信息的。<br>在终端上调试程序的程序员一般都有这样的经历：某个程序出现segment default了，然后终端中会输出回溯信息。或者，我们调试程序时，也经常需要回溯，查找一些变量或查看函数调用信息。这个过程，就是所谓的栈的回卷。事实上，在每一个函数调用过程中，都会形成一个栈帧，以main函数调用foo2_func为例。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">        高 地 址    +--------------------+                      </span><br><span class="line">                    |                    |                      </span><br><span class="line">                    |                    |                      </span><br><span class="line">                   X+--------------------+ &lt;-+                  </span><br><span class="line">                   X|                    |   |                  </span><br><span class="line">                   X|                    |   |         栈 增 长 方 向</span><br><span class="line">                   X|        。。。      |   |      +           </span><br><span class="line">                   X+--------------------+   |      |           </span><br><span class="line">         main 函 数 栈 帧                |   |      |           </span><br><span class="line">                   X|      局 部 变 量   |   |      |           </span><br><span class="line">                   X+--------------------+   |      v           </span><br><span class="line">                   X|                    |   |                  </span><br><span class="line">                   X|     foo2_func参数  |   |                  </span><br><span class="line">                   X+--------------------+   |                  </span><br><span class="line">                   X| 返 回foo2_func的 地 址  |   |                  </span><br><span class="line">                   X|                    |   |                  </span><br><span class="line">                   X|                    |   |                  </span><br><span class="line">                   X+--------------------+   |                  </span><br><span class="line">                   X|  main 函 数 ebp    |   |                  </span><br><span class="line">                   X|                    +-+-+                  </span><br><span class="line">                   X+--------------------+ &lt;-+-+  ebp           </span><br><span class="line">                  XX|                    |                      </span><br><span class="line">                  XX|                    |                      </span><br><span class="line">foo2_func函 数 栈 帧 XX|   局 部 变 量    |</span><br><span class="line">                  XX|                    |                      </span><br><span class="line">        低 地 址     +--------------------+ &lt;---+  esp</span><br></pre></td></tr></table></figure></p>
+<p>帧指针和基指针均指向栈帧的底部，指示叫法不同，在IA32中，通常使用寄存器ebp保存这个位置。因为main并不是程序中第一个运行的函数，所以main也是一个被调用函数，其也有栈帧。事实上，及时程序中第一个被调用的函数_start(在启动代码中)，也会自己模拟一个栈帧。<br>理论上，调试器或异常处理程序完全可以根据帧指针来遍历调用过程中各个函数的栈帧，但是因为gcc的代码优化，可能导致调试器或异常处理很难甚至不能正常回溯栈帧，所以这些伪指令的目的就是辅助编译过程创建栈帧信息，并将他们保存在目标文件的段.eh_frame中，这样就不会被编译器优化影响了。<br>去掉这些伪指令后，函数foo2_func中，cpu真正执行的代码如下：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">foo2_func:</span><br><span class="line">        pushl   %ebp</span><br><span class="line">        movl    %esp, %ebp</span><br><span class="line">        subl    $<span class="number">16</span>, %esp</span><br><span class="line">        movl    foo2, %eax</span><br><span class="line">        movl    %eax, -<span class="number">4</span>(%ebp)</span><br><span class="line">        leave</span><br><span class="line">        ret</span><br></pre></td></tr></table></figure></p>
+<p>在汇编语言中，在函数的开头和结尾处分别会插入一小段代码，分别成为prologue和Epilogue，如foo2_func中第2，3，4行代码就是prologue。第7.8行代码就是Epilogue。<br>prologue保存主调函数的帧指针，这是为了在子函数调用结束后，恢复主调函数的栈帧。同时为子函数准备栈帧。其主要操作包括：<br>1.保存主调函数的帧指针，如第一行代码所示，就是将保存在寄存器ebp的帧指针压栈。在退出子函数时可以从栈中恢复主调函数的帧指针。<br>2.将esp复制给ebp，即将子函数的帧指针指向主调函数的栈顶，如第二行代码所示。换句话说，这行代码的意义就是记录了子函数的栈帧的底部，从这里就开始了子函数的栈帧。<br>3.修改栈顶指针esp，为子函数的本地变量分配栈空间。如第三行代码所示。注意虽然这里的foo2_func中只有一个局部变量ret，占据4字节，但是还是预留了16字节的栈空间，这根据的是IA32的ABI的16字节对齐要求。<br>Epilogue与prologue恰恰相反，如果说prologue相当于构造函数，那么Epilogue就相当于析构函数。其主要操作包括：<br>1.将栈指针esp指向当前子函数的栈帧的帧指针，也就是说，指向当前栈帧的栈底，而在这个位置，恰恰是prologue保存的主调函数的帧指针。然后，通过指令pop将主调函数的帧指针弹出到ebp中，如此，一方面释放了被调函数foo2_func的栈帧，同时也回到了主调函数main的栈帧。IA32提供了指令leave来完成这个功能，即第六行代码，这个指令相当于：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">movl %ebp， %esp</span><br><span class="line">pop %ebp</span><br></pre></td></tr></table></figure></p>
+<p>2.将调用子函数时call指令压栈的返回地址从栈顶pop到EIP中，并跳转到EIP处继续执行。如此，CPU就返回到主调函数继续执行。IA32提供了指令ret来完成这个功能。</p>
+<p>除了prologue和Epilogue，foo2_func的核心代码就剩下第4行和第5行了。这两行代码对应的就是C语言里的复制语句int ret = foo2.首先，即第5行代码，cpu从数据段中读取全局变量foo2的值到寄存器EAX中。然后，第6行代码，将eax中的内容，即foo2的值，复制到栈中的局部变量ret的位置。代码中根据局部百年两相对于栈的帧指针的偏移来访问局部变量，如变量ret位于相对于栈底偏移为-4的内存处。</p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/toolchain/">toolchain</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://yoursite.com/2015/01/19/编译/" data-title="编译 | 春暖花开" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2015/01/20/电源管理架构/" title="电源管理架构">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  电源管理架构</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2015/01/18/预编译/"  title="预编译">
+ <strong>NEXT:</strong><br/> 
+ <span>预编译
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<section class="comment">
+	
+	<div class="ds-thread" data-title="编译" data-thread-key="编译" data-author-key="haichunzhao" data-url="http://yoursite.com/post/编译"></div>
+	
+</section>
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+  
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+<div id="authorInfo">
+	
+		<div class="author-logo"></div>		
+	
+	<div class="social-list" class="clearfix">
+		
+		
+		
+		
+		
+	</div>
+</div>
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+			<li><a href="/categories/blog/" title="blog">blog<sup>1</sup></a></li>
+		
+			<li><a href="/categories/power-management/" title="power management">power management<sup>1</sup></a></li>
+		
+			<li><a href="/categories/toolchain/" title="toolchain">toolchain<sup>4</sup></a></li>
+		
+			<li><a href="/categories/uboot/" title="uboot">uboot<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/gcc/" title="gcc">gcc<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+      <li><a href="http://hexo.io" target="_blank" title="Hexo">Hexo</a></li>
+      <li><a href="http://gengbiao.me" target="_blank" title="coney">coney's Blog</a></li>
+    </ul>
+</div>
+
+
+  <div class="rsspart">
+	<a href="atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  
+  <div class="tagcloudlist">
+    <p class="asidetitle">标签云</p>
+    <div class="tagcloudlist clearfix">
+       <a href="/tags/gcc/" style="font-size: 10px;">gcc</a>
+    </div>
+  </div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+    
+            <p class="copyright"> © 2016 
+		
+		<a href="http://yoursite.com" target="_blank" title="haichunzhao">haichunzhao</a>
+		
+            && Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> && Theme by <a href="http://gengbiao.me" target="_blank" title="coney">coney</a>
+            </div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"null"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+    || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script> 
+
+
+
+
+
+
+<script>
+    
+        var _bdImg = '4';
+    
+    window._bd_share_config={
+        "common":{
+            "bdSnsKey":{
+
+            },
+            "bdText":"",
+            "bdMini":"2",
+            "bdMiniList":[
+                "qzone",
+                "tsina",
+                "weixin",
+                "renren",
+                "tqq",
+                "tieba",
+                "douban",
+                "sqq",
+                "diandian",
+                "huaban",
+                "youdao",
+                "mail",
+                "ty",
+                "fbook",
+                "twi",
+                "linkedin",
+                "copy",
+                "print"
+            ],
+            "bdPic":"",
+            "bdStyle":"0",
+            "bdSize":"16"
+        },
+        "slide":{
+            "type":"slide",
+            "bdImg":_bdImg,
+            "bdPos":"right",
+            "bdTop":"350"
+        },
+        "image":{
+            "viewList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ],
+            "viewText":"分享：",
+            "viewSize":"16"
+        },
+        "selectShare":{
+            "bdContainerClass":null,
+            "bdSelectMiniList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ]
+        }
+    };
+    with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+
+
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ga('create', 'null', 'null');  
+ga('send', 'pageview');
+</script>
+
+
+  </body>
+</html>
+

@@ -1,0 +1,447 @@
+
+ <!DOCTYPE HTML>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="baidu_union_verify" content="d1952c66cf48912e21c18c7c581f382a">
+  <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
+<meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
+  
+    <title>汇编-目标文件 | 春暖花开</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
+    
+    <meta name="author" content="haichunzhao">
+    
+    <meta name="description" content="汇编器将汇编代码翻译为机器指令，每一条汇编语句几乎都对应一条机器指令，所以汇编器的会变过程相对于编译器来讲比较简单，它没有复杂的语法，也没有语义，也不需要做指令优化，只是根据汇编指令和机器指令的对照表进行翻译就可以了。当然，汇编器的工作不仅包括翻译汇编指令到机器指令，除了生成机器码外，汇编器还要在目">
+    
+    
+    
+    
+    <link rel="alternate" href="atom.xml" title="春暖花开" type="application/atom+xml">
+    
+    
+    <link rel="icon" href="/img/favicon.ico">
+    
+    
+    <link rel="stylesheet" href="/css/style.css" type="text/css">
+    
+    <script>
+        var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            var _bdId ='391982416296a0d54221f59fe35250d4';
+             hm.src = "//hm.baidu.com/hm.js?" + _bdId;
+             var s = document.getElementsByTagName("script")[0]; 
+             s.parentNode.insertBefore(hm, s);
+        })();
+    </script>
+     
+</head>
+
+  <body>
+    <header>
+      <div>
+		
+			<div id="textlogo">
+				<h1 class="site-name"><a href="/" title="春暖花开">春暖花开</a></h1>
+				<a class="blog-motto"></a>
+			</div>
+			<div class="navbar"><a class="navbutton navmobile" href="#" title="菜单">
+			</a></div>
+			<nav class="animated">
+				<ul>
+					<ul>
+					 
+						<li><a href="/">首页</a></li>
+					
+						<li><a href="/archives">归档</a></li>
+					
+					<li>
+					
+                                            <form class="search" action=http://zhannei.baidu.com/cse/search target="_blank">
+                                            <label>Search</label>
+                                        <input name="s" type="hidden" value= null ><input type="text" name="q" size="30" placeholder="搜索"><br>
+					
+					</li>
+				</ul>
+                            </nav>			
+</div>
+
+    </header>
+    <div id="container">
+      <div id="main" class="post" itemscope itemprop="blogPost">
+	<article itemprop="articleBody"> 
+		<header class="article-info clearfix">
+  <h1 itemprop="name">
+    
+      <a href="/2015/01/20/汇编/" title="汇编-目标文件" itemprop="url">汇编-目标文件</a>
+  </h1>
+  <p class="article-author">By
+    
+      <a href="http://yoursite.com" title="haichunzhao">haichunzhao</a>
+    </p>
+  <p class="article-time">
+    <time datetime="2015-01-20T13:02:43.000Z" itemprop="datePublished">Jan 20 2015</time>
+    更新日期:<time datetime="2015-01-21T13:32:30.000Z" itemprop="dateModified">Jan 21 2015</time>
+    
+  </p>
+</header>
+	<div class="article-content">
+		
+		
+		<div id="toc" class="toc-article">
+			<strong class="toc-title">文章目录</strong>
+		
+		</div>
+		
+		<p>汇编器将汇编代码翻译为机器指令，每一条汇编语句几乎都对应一条机器指令，所以汇编器的会变过程相对于编译器来讲比较简单，它没有复杂的语法，也没有语义，也不需要做指令优化，只是根据汇编指令和机器指令的对照表进行翻译就可以了。当然，汇编器的工作不仅包括翻译汇编指令到机器指令，除了生成机器码外，汇编器还要在目标文件中创建辅助链接时需要的信息，包括符号表，重定位表等。<br>1.目标文件<br>汇编过程的产物是目标文件，同前面的预编译和编译阶段产生的文本文件不同，目标文件的格式更为复杂，其中包括链接需要的信息，所以在理解汇编过程前，我们需要了解一下目标文件的格式。linux下的二进制文件包括可执行文件，静态库和动态库等，均采用ELF格式存储，目标文件的格式也不例外，也采用ELF格式存储。<br>对于32位的ELF文件来说，其最前部是文件头部信息，描述了整个文件的基本属性，除了包括该文件运行在什么操作系统中，运行在什么硬件体系上，程序的入口地址是什么等基本信息外，最重要的是记录了两个表格的相关信息，如表格所在位置，其中包括的条目等。这两个表格一个是section header table，主要是供编译时链接用的，表格中定义了各个段的位置，长度，属性等信息；另外一个是program header table，主要是供内核和动态加载器从磁盘加载ELF文件到内存时使用的。对于目标文件，由于器只是编译过程的一个中间产物，不涉及装载运行，因此，在目标文件中不会创建program header table。<br>下面我们通过命令readelf列出目标文件foo2.o的elf头信息。<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">zhaohc@spring:~$ gcc -c hello.c foo1.c foo2.c </span><br><span class="line">zhaohc@spring:~$ readelf -h foo2.o </span><br><span class="line">ELF Header:</span><br><span class="line">  Magic:   7f 45 4c 46 01 01 01 00 00 00 00 00 00 00 00 00 </span><br><span class="line">  Class:                             ELF32</span><br><span class="line">  Data:                              2's complement, little endian</span><br><span class="line">  Version:                           1 (current)</span><br><span class="line">  OS/ABI:                            UNIX - System V</span><br><span class="line">  ABI Version:                       0</span><br><span class="line">  Type:                              REL (Relocatable file)</span><br><span class="line">  Machine:                           Intel 80386</span><br><span class="line">  Version:                           0x1</span><br><span class="line">  Entry point address:               0x0</span><br><span class="line">  Start of program headers:          0 (bytes into file)</span><br><span class="line">  Start of section headers:          256 (bytes into file)</span><br><span class="line">  Flags:                             0x0</span><br><span class="line">  Size of this header:               52 (bytes)</span><br><span class="line">  Size of program headers:           0 (bytes)</span><br><span class="line">  Number of program headers:         0</span><br><span class="line">  Size of section headers:           40 (bytes)</span><br><span class="line">  Number of section headers:         12</span><br><span class="line">  Section header string table index: 9</span><br></pre></td></tr></table></figure></p>
+<p>foo2.o的ELF头占用了52个字节，通过ELF头可见该文件是32位的ELF文件；使用little endian字节序存储字节；ABI遵循UNIX - System V标准；运行在类UNIX系统上；该文件是一个REL类型的文件，通常，可执行文件的类型是EXEC，动态共享库的类型是DYN，静态库和目标文件的类型是REL；该目标文件是为IA32架构编译的；因为是目标文件，不存在执行的概念，所以程序入口Entry point address在这里不适用；foo2.o中的section header在偏移256字节处，section header table中的峨嵋个section header占用40个字节，section header table共包含12个section header。<br>在文件头信息后，就是各个段了。毫不夸张的说，ELF文件就是段的组合。大体上，段可以分为如下几类：一类是存储指令的，通常成为代码段；第二类是存储数据的，通常称为数据段。但是存储数据的又细分为两个段，已经初始化的全局数据存放在.data段中，未初始化的全局数据存储在.bss段。不要被BSS这个令人困惑的名称迷惑，这个名称不是非常贴切，完全是历史遗留的。.data段和.bss段本质并没有什么不同，但是因为未初始化的变量不包含数据，所以在ELF文件中不需要占用空间，程序装载时在内存中即时分配就可以了。所以，为了节省存储器空间，人为地将存储数据划分为两个段。除了最重要的代码段和数据段外，汇编器还将在目标文件中创建辅助链接段，存储如符号表，重定位表等。<br>我们考察目标文件foo2.o的section header table：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">zhaohc@spring:~$ readelf -S foo2.o </span><br><span class="line">There are <span class="number">12</span> section headers, starting at offset <span class="number">0x100</span>:</span><br><span class="line"></span><br><span class="line">Section Headers:</span><br><span class="line">  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al</span><br><span class="line">  [ <span class="number">0</span>]                   NULL            <span class="number">00000000</span> <span class="number">000000</span> <span class="number">000000</span> <span class="number">00</span>      <span class="number">0</span>   <span class="number">0</span>  <span class="number">0</span></span><br><span class="line">  [ <span class="number">1</span>] .text             PROGBITS        <span class="number">00000000</span> <span class="number">000034</span> <span class="number">000010</span> <span class="number">00</span>  AX  <span class="number">0</span>   <span class="number">0</span>  <span class="number">1</span></span><br><span class="line">  [ <span class="number">2</span>] .rel.text         REL             <span class="number">00000000</span> <span class="number">000398</span> <span class="number">000008</span> <span class="number">08</span>     <span class="number">10</span>   <span class="number">1</span>  <span class="number">4</span></span><br><span class="line">  [ <span class="number">3</span>] .data             PROGBITS        <span class="number">00000000</span> <span class="number">000044</span> <span class="number">000004</span> <span class="number">00</span>  WA  <span class="number">0</span>   <span class="number">0</span>  <span class="number">4</span></span><br><span class="line">  [ <span class="number">4</span>] .bss              NOBITS          <span class="number">00000000</span> <span class="number">000048</span> <span class="number">000000</span> <span class="number">00</span>  WA  <span class="number">0</span>   <span class="number">0</span>  <span class="number">1</span></span><br><span class="line">  [ <span class="number">5</span>] .comment          PROGBITS        <span class="number">00000000</span> <span class="number">000048</span> <span class="number">000025</span> <span class="number">01</span>  MS  <span class="number">0</span>   <span class="number">0</span>  <span class="number">1</span></span><br><span class="line">  [ <span class="number">6</span>] .note.GNU-stack   PROGBITS        <span class="number">00000000</span> <span class="number">00006</span>d <span class="number">000000</span> <span class="number">00</span>      <span class="number">0</span>   <span class="number">0</span>  <span class="number">1</span></span><br><span class="line">  [ <span class="number">7</span>] .eh_frame         PROGBITS        <span class="number">00000000</span> <span class="number">000070</span> <span class="number">000038</span> <span class="number">00</span>   A  <span class="number">0</span>   <span class="number">0</span>  <span class="number">4</span></span><br><span class="line">  [ <span class="number">8</span>] .rel.eh_frame     REL             <span class="number">00000000</span> <span class="number">0003</span>a0 <span class="number">000008</span> <span class="number">08</span>     <span class="number">10</span>   <span class="number">7</span>  <span class="number">4</span></span><br><span class="line">  [ <span class="number">9</span>] .shstrtab         STRTAB          <span class="number">00000000</span> <span class="number">0000</span>a8 <span class="number">000057</span> <span class="number">00</span>      <span class="number">0</span>   <span class="number">0</span>  <span class="number">1</span></span><br><span class="line">  [<span class="number">10</span>] .symtab           SYMTAB          <span class="number">00000000</span> <span class="number">0002e0</span> <span class="number">0000</span>a0 <span class="number">10</span>     <span class="number">11</span>   <span class="number">8</span>  <span class="number">4</span></span><br><span class="line">  [<span class="number">11</span>] .strtab           STRTAB          <span class="number">00000000</span> <span class="number">000380</span> <span class="number">000017</span> <span class="number">00</span>      <span class="number">0</span>   <span class="number">0</span>  <span class="number">1</span></span><br><span class="line">Key to Flags:</span><br><span class="line">  W (write), A (alloc), X (execute), M (merge), S (strings)</span><br><span class="line">  I (info), L (link order), G (group), T (TLS), E (exclude), x (unknown)</span><br><span class="line">  O (extra OS processing required) o (OS specific), p (processor specific)</span><br></pre></td></tr></table></figure></p>
+<p>根据输出可见，目标文件foo2.o的section header table中包含12个section header：<br>-.text段存储在文件中偏移0x34处，占据0x10个字节。不要将.text段和进程的代码段混淆，进程的代码段不仅包括.text段，在后面链接时，我们还会看到，包括.init,.fini等段存储的代码都属于代码段。这些段都被映射到program header table中的一个段，在ELF加载时，统一作为进程的代码段。<br>-.data段存储在文件中偏移0x44字节处，占据0x4个字节空间。<br>-如我们在前面讨论的，虽然目标文件的section header table中包含.bss段，但是因为其不必记录数据，所以.bss段在文件中只占据section header table中的一个section header，而并没有对应的段。在加载程序时，加载器将依据.bss段的section header中的信息，在内存中为其分配空间。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">zhaohc@spring:~$ gcc hello.c</span><br><span class="line">zhaohc@spring:~$ readelf -S a.out </span><br><span class="line">There are <span class="number">30</span> section headers, starting at offset <span class="number">0x1150</span>:</span><br><span class="line"></span><br><span class="line">Section Headers:</span><br><span class="line">  [Nr] Name              Type            Addr     Off    Size   ES Flg Lk Inf Al</span><br><span class="line">...</span><br><span class="line">  [<span class="number">24</span>] .data             PROGBITS        <span class="number">0804</span>a014 <span class="number">001014</span> <span class="number">000010</span> <span class="number">00</span>  WA  <span class="number">0</span>   <span class="number">0</span>  <span class="number">4</span></span><br><span class="line">  [<span class="number">25</span>] .bss              NOBITS          <span class="number">0804</span>a024 <span class="number">001024</span> <span class="number">000004</span> <span class="number">00</span>  WA  <span class="number">0</span>   <span class="number">0</span>  <span class="number">1</span></span><br><span class="line">  [<span class="number">26</span>] .comment          PROGBITS        <span class="number">00000000</span> <span class="number">001024</span> <span class="number">000024</span> <span class="number">01</span>  MS  <span class="number">0</span>   <span class="number">0</span>  <span class="number">1</span></span><br><span class="line">  [<span class="number">27</span>] .shstrtab         STRTAB          <span class="number">00000000</span> <span class="number">001048</span> <span class="number">000106</span> <span class="number">00</span>      <span class="number">0</span>   <span class="number">0</span>  <span class="number">1</span></span><br><span class="line">  [<span class="number">28</span>] .symtab           SYMTAB          <span class="number">00000000</span> <span class="number">001600</span> <span class="number">000480</span> <span class="number">10</span>     <span class="number">29</span>  <span class="number">47</span>  <span class="number">4</span></span><br><span class="line">  [<span class="number">29</span>] .strtab           STRTAB          <span class="number">00000000</span> <span class="number">001</span>a80 <span class="number">00026</span>c <span class="number">00</span>      <span class="number">0</span>   <span class="number">0</span>  <span class="number">1</span></span><br><span class="line">Key to Flags:</span><br><span class="line">  W (write), A (alloc), X (execute), M (merge), S (strings)</span><br><span class="line">  I (info), L (link order), G (group), T (TLS), E (exclude), x (unknown)</span><br><span class="line">  O (extra OS processing required) o (OS specific), p (processor specific)</span><br></pre></td></tr></table></figure></p>
+<p>根据输出可见，.bss段在文件中偏移为0x1024，但是占用过的空间并不是0字节，而是0x4个字节，这是为什么呢？而我们再观察.comment段在文件中的偏移，也为0x1024.也就是说，正如我们讨论的，.bss段在磁盘文件中并未占据任何空间，.bss段的size指示告诉加载器在加载程序时，在内存中为该段分配内存空间。<br>-symtab段记录的是符号表。因为符号的名字字串长度可变，所以目标文件将符号的名字字串剥离出来，记录在另外一个段.strtab中，符号表使用符号名字的索引在段.strtab中的偏移来确定符号的名字。<br>-同样的道理，shstrtab中记录的是段的名字<br>-以rel开头的，如.rel.text,rel.en_frame，记录的是段中需要重定位的符号。<br>-.en_frame段中记录的是调试和异常处理时用到的信息。<br>-.comment,.note.GNU-stack等段如其名字所示，都是一些comment和note，无论是链接还是装载都不会用到。<br>目标文件格式如下：<br><figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">                  +------------------+          </span><br><span class="line">                  | ELF header       |          </span><br><span class="line">              +---+                  |          </span><br><span class="line">              |   +------------------+          </span><br><span class="line">              |   |                  |          </span><br><span class="line">              |   |  。text           |  &lt;------+</span><br><span class="line">              |   +------------------+         |</span><br><span class="line">              |   |                  |         |</span><br><span class="line">              |   |   .data          | &lt;--+    |</span><br><span class="line">              |   +------------------+    |    |</span><br><span class="line">              |   |                  |    |    |</span><br><span class="line">              |   |     ...          |    |    |</span><br><span class="line">              +-&gt;X+------------------+    |    |</span><br><span class="line">                XX|     ...          |    |    |</span><br><span class="line">                X +------------------+    |    |</span><br><span class="line">section header table                 +---------+</span><br><span class="line">               X  +------------------+    |     </span><br><span class="line">               X  |                  +----+     </span><br><span class="line">               X  +------------------+          </span><br><span class="line">               XX |                  +----+     </span><br><span class="line">                X +------------------+    |     </span><br><span class="line">                XX|           ...    |    |     </span><br><span class="line">                 X+------------------+    |     </span><br><span class="line">                  |       ...        |    |     </span><br><span class="line">                  +------------------+    |     </span><br><span class="line">                  |                  |    |     </span><br><span class="line">                  |      .symtab     | &lt;--+     </span><br><span class="line">                  |                  |          </span><br><span class="line">                  +------------------+          </span><br><span class="line">                  |        ...       |          </span><br><span class="line">                  +------------------+</span><br></pre></td></tr></table></figure></p>
+  
+	</div>
+		<footer class="article-footer clearfix">
+
+
+<div class="article-categories">
+  <span></span>
+  <a class="article-category-link" href="/categories/toolchain/">toolchain</a>
+</div>
+
+
+
+<div class="article-share" id="share">
+
+  <div data-url="http://yoursite.com/2015/01/20/汇编/" data-title="汇编-目标文件 | 春暖花开" data-tsina="null" class="share clearfix">
+  </div>
+
+</div>
+</footer>   	       
+	</article>
+	
+<nav class="article-nav clearfix">
+ 
+ <div class="prev" >
+ <a href="/2016/02/02/uboot介绍/" title="uboot介绍-1">
+  <strong>PREVIOUS:</strong><br/>
+  <span>
+  uboot介绍-1</span>
+</a>
+</div>
+
+
+<div class="next">
+<a href="/2015/01/20/电源管理架构/"  title="电源管理架构">
+ <strong>NEXT:</strong><br/> 
+ <span>电源管理架构
+</span>
+</a>
+</div>
+
+</nav>
+
+	
+<section class="comment">
+	
+	<div class="ds-thread" data-title="汇编-目标文件" data-thread-key="汇编" data-author-key="haichunzhao" data-url="http://yoursite.com/post/汇编"></div>
+	
+</section>
+
+
+</div>  
+      <div class="openaside"><a class="navbutton" href="#" title="显示侧边栏"></a></div>
+
+  <div id="toc" class="toc-aside">
+  <strong class="toc-title">文章目录</strong>
+  
+  </div>
+
+<div id="asidepart">
+<div class="closeaside"><a class="closebutton" href="#" title="隐藏侧边栏"></a></div>
+<aside class="clearfix">
+<div id="authorInfo">
+	
+		<div class="author-logo"></div>		
+	
+	<div class="social-list" class="clearfix">
+		
+		
+		
+		
+		
+	</div>
+</div>
+
+  
+<div class="categorieslist">
+	<p class="asidetitle">分类</p>
+		<ul>
+		
+			<li><a href="/categories/blog/" title="blog">blog<sup>1</sup></a></li>
+		
+			<li><a href="/categories/power-management/" title="power management">power management<sup>1</sup></a></li>
+		
+			<li><a href="/categories/toolchain/" title="toolchain">toolchain<sup>4</sup></a></li>
+		
+			<li><a href="/categories/uboot/" title="uboot">uboot<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  
+<div class="tagslist">
+	<p class="asidetitle">标签</p>
+		<ul class="clearfix">
+		
+			<li><a href="/tags/gcc/" title="gcc">gcc<sup>1</sup></a></li>
+		
+		</ul>
+</div>
+
+
+  <div class="linkslist">
+  <p class="asidetitle">友情链接</p>
+    <ul>
+      <li><a href="http://hexo.io" target="_blank" title="Hexo">Hexo</a></li>
+      <li><a href="http://gengbiao.me" target="_blank" title="coney">coney's Blog</a></li>
+    </ul>
+</div>
+
+
+  <div class="rsspart">
+	<a href="atom.xml" target="_blank" title="rss">RSS 订阅</a>
+</div>
+
+  
+  <div class="tagcloudlist">
+    <p class="asidetitle">标签云</p>
+    <div class="tagcloudlist clearfix">
+       <a href="/tags/gcc/" style="font-size: 10px;">gcc</a>
+    </div>
+  </div>
+
+
+</aside>
+</div>
+    </div>
+    <footer><div id="footer" >
+    
+            <p class="copyright"> © 2016 
+		
+		<a href="http://yoursite.com" target="_blank" title="haichunzhao">haichunzhao</a>
+		
+            && Powered by <a href="http://hexo.io" target="_blank" title="hexo">hexo</a> && Theme by <a href="http://gengbiao.me" target="_blank" title="coney">coney</a>
+            </div>
+</footer>
+    <script src="/js/jquery-2.1.0.min.js"></script>
+<script type="text/javascript">
+$(document).ready(function(){ 
+  $('.navbar').click(function(){
+    $('header nav').toggleClass('shownav');
+  });
+  var myWidth = 0;
+  function getSize(){
+    if( typeof( window.innerWidth ) == 'number' ) {
+      myWidth = window.innerWidth;
+    } else if( document.documentElement && document.documentElement.clientWidth) {
+      myWidth = document.documentElement.clientWidth;
+    };
+  };
+  var m = $('#main'),
+      a = $('#asidepart'),
+      c = $('.closeaside'),
+      o = $('.openaside');
+  $(window).resize(function(){
+    getSize(); 
+    if (myWidth >= 1024) {
+      $('header nav').removeClass('shownav');
+    }else
+    {
+      m.removeClass('moveMain');
+      a.css('display', 'block').removeClass('fadeOut');
+      o.css('display', 'none');
+      
+      $('#toc.toc-aside').css('display', 'none');
+        
+    }
+  });
+  c.click(function(){
+    a.addClass('fadeOut').css('display', 'none');
+    o.css('display', 'block').addClass('fadeIn');
+    m.addClass('moveMain');
+  });
+  o.click(function(){
+    o.css('display', 'none').removeClass('beforeFadeIn');
+    a.css('display', 'block').removeClass('fadeOut').addClass('fadeIn');      
+    m.removeClass('moveMain');
+  });
+  $(window).scroll(function(){
+    o.css("top",Math.max(80,260-$(this).scrollTop()));
+  });
+});
+</script>
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var ai = $('.article-content>iframe'),
+      ae = $('.article-content>embed'),
+      t  = $('#toc'),
+      h  = $('article h2')
+      ah = $('article h2'),
+      ta = $('#toc.toc-aside'),
+      o  = $('.openaside'),
+      c  = $('.closeaside');
+  if(ai.length>0){
+    ai.wrap('<div class="video-container" />');
+  };
+  if(ae.length>0){
+   ae.wrap('<div class="video-container" />');
+  };
+  if(ah.length==0){
+    t.css('display','none');
+  }else{
+    c.click(function(){
+      ta.css('display', 'block').addClass('fadeIn');
+    });
+    o.click(function(){
+      ta.css('display', 'none');
+    });
+    $(window).scroll(function(){
+      ta.css("top",Math.max(140,320-$(this).scrollTop()));
+    });
+  };
+});
+</script>
+
+
+<script type="text/javascript">
+$(document).ready(function(){ 
+  var $this = $('.share'),
+      url = $this.attr('data-url'),
+      encodedUrl = encodeURIComponent(url),
+      title = $this.attr('data-title'),
+      tsina = $this.attr('data-tsina');
+  var html = [
+  '<a href="#" class="overlay" id="qrcode"></a>',
+  '<div class="qrcode clearfix"><span>扫描二维码分享到微信朋友圈</span><a class="qrclose" href="#share"></a><strong>Loading...Please wait</strong><img id="qrcode-pic" data-src="http://s.jiathis.com/qrcode.php?url=' + encodedUrl + '"/></div>',
+  '<a href="#textlogo" class="article-back-to-top" title="Top"></a>',
+  '<a href="https://www.facebook.com/sharer.php?u=' + encodedUrl + '" class="article-share-facebook" target="_blank" title="Facebook"></a>',
+  '<a href="#qrcode" class="article-share-qrcode" title="QRcode"></a>',
+  '<a href="https://twitter.com/intent/tweet?url=' + encodedUrl + '" class="article-share-twitter" target="_blank" title="Twitter"></a>',
+  '<a href="http://service.weibo.com/share/share.php?title='+title+'&url='+encodedUrl +'&ralateUid='+ tsina +'&searchPic=true&style=number' +'" class="article-share-weibo" target="_blank" title="Weibo"></a>',
+  '<span title="Share to"></span>'
+  ].join('');
+  $this.append(html);
+  $('.article-share-qrcode').click(function(){
+    var imgSrc = $('#qrcode-pic').attr('data-src');
+    $('#qrcode-pic').attr('src', imgSrc);
+    $('#qrcode-pic').load(function(){
+        $('.qrcode strong').text(' ');
+    });
+  });
+});     
+</script>
+
+
+<script type="text/javascript">
+  var duoshuoQuery = {short_name:"null"};
+  (function() {
+    var ds = document.createElement('script');
+    ds.type = 'text/javascript';ds.async = true;
+    ds.src = '//static.duoshuo.com/embed.js';
+    ds.charset = 'UTF-8';
+    (document.getElementsByTagName('head')[0] 
+    || document.getElementsByTagName('body')[0]).appendChild(ds);
+  })();
+</script> 
+
+
+
+
+
+
+<script>
+    
+        var _bdImg = '4';
+    
+    window._bd_share_config={
+        "common":{
+            "bdSnsKey":{
+
+            },
+            "bdText":"",
+            "bdMini":"2",
+            "bdMiniList":[
+                "qzone",
+                "tsina",
+                "weixin",
+                "renren",
+                "tqq",
+                "tieba",
+                "douban",
+                "sqq",
+                "diandian",
+                "huaban",
+                "youdao",
+                "mail",
+                "ty",
+                "fbook",
+                "twi",
+                "linkedin",
+                "copy",
+                "print"
+            ],
+            "bdPic":"",
+            "bdStyle":"0",
+            "bdSize":"16"
+        },
+        "slide":{
+            "type":"slide",
+            "bdImg":_bdImg,
+            "bdPos":"right",
+            "bdTop":"350"
+        },
+        "image":{
+            "viewList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ],
+            "viewText":"分享：",
+            "viewSize":"16"
+        },
+        "selectShare":{
+            "bdContainerClass":null,
+            "bdSelectMiniList":[
+                "weixin",
+                "qzone",
+                "tsina",
+                "renren",
+                "douban",
+                "tqq"
+            ]
+        }
+    };
+    with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];
+</script>
+
+
+
+
+<script type="text/javascript">
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+ga('create', 'null', 'null');  
+ga('send', 'pageview');
+</script>
+
+
+  </body>
+</html>
+
