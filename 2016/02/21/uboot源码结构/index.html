@@ -7,12 +7,13 @@
   <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
 <meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
   
-    <title>预编译 | 春暖花开</title>
+    <title>uboot源码结构 | 春暖花开</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="haichunzhao">
     
-    <meta name="description" content="在预编译阶段，预编译器将处理器代码中的预编译指令。一般而言，c语言中的预编译指令以#开头，常用的预编译指令包括文件包含命令#include，宏定义#define，以及条件编译命令#if，#else，#endif等。在工具链中，一般都提供单独的预编译器，比如GCC中提供的预编译器为cpp。但是，因为预">
+    <meta name="description" content="uboot顶层目录下有30多个子目录，分别存放和管理不同的源程序。这些目录中存放的文件有其规则，可以分为3类。第一类目录与处理器体系结构或开发板硬件直接相关第二类目录是一些通用的函数或驱动程序第三类目录是uboot的应用程序，工具和文档
+board： 平台依赖  存放电路板相关的目录文件，如RPXl">
     
     
     
@@ -74,15 +75,15 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2015/01/18/预编译/" title="预编译" itemprop="url">预编译</a>
+      <a href="/2016/02/21/uboot源码结构/" title="uboot源码结构" itemprop="url">uboot源码结构</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://yoursite.com" title="haichunzhao">haichunzhao</a>
     </p>
   <p class="article-time">
-    <time datetime="2015-01-18T12:13:47.000Z" itemprop="datePublished">Jan 18 2015</time>
-    更新日期:<time datetime="2015-01-18T12:42:10.000Z" itemprop="dateModified">Jan 18 2015</time>
+    <time datetime="2016-02-21T13:29:32.000Z" itemprop="datePublished">Feb 21 2016</time>
+    更新日期:<time datetime="2016-02-21T13:45:44.000Z" itemprop="dateModified">Feb 21 2016</time>
     
   </p>
 </header>
@@ -94,10 +95,8 @@
 		
 		</div>
 		
-		<p>在预编译阶段，预编译器将处理器代码中的预编译指令。一般而言，c语言中的预编译指令以#开头，常用的预编译指令包括文件包含命令#include，宏定义#define，以及条件编译命令#if，#else，#endif等。<br>在工具链中，一般都提供单独的预编译器，比如GCC中提供的预编译器为cpp。但是，因为预编译也可以看作编译过程的第一遍，是为编译做的一些准备工作，所以通常编译器中也包含了预编译的功能。如在前面的编译过程中，我们看到gcc并没有单独调用cpp，而是直接调用cc1进行编译，原因就在于此。<br>以下面的程序为例，该程序使用了典型的预编译指令，我们通过观察这个程序的预处理结果，来直观体会预编译过程。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">foo.h:</span><br><span class="line"><span class="comment">#ifndef _FOO_H_</span></span><br><span class="line"><span class="comment">#define _FOO_H</span></span><br><span class="line"><span class="comment">#define PI 3.1415926</span></span><br><span class="line"><span class="comment">#define AREA</span></span><br><span class="line"></span><br><span class="line">struct foo_struct &#123;</span><br><span class="line">int a;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment">#endif</span></span><br><span class="line">hello.c:</span><br><span class="line"><span class="comment">#include "foo.h"</span></span><br><span class="line">int main(int argc, char * argv[])</span><br><span class="line">&#123;</span><br><span class="line">        int result;</span><br><span class="line">        int r = <span class="number">5</span>;</span><br><span class="line"><span class="comment">#ifdef AREA</span></span><br><span class="line">        result = PI * r * r;</span><br><span class="line"><span class="comment">#else</span></span><br><span class="line">        result = PI * r * <span class="number">2</span>;</span><br><span class="line"><span class="comment">#endif</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>我们可以使用选项-E告诉编译器仅作预处理，不进行编译，汇编和链接，具体命令如下：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">gcc -E hello.c -o hello.i</span><br></pre></td></tr></table></figure></p>
-<p>预编译后的结果保存在文件hello.i中，其内容如下：<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 1 "/usr/include/stdc-predef.h" 1 3 4</span></span><br><span class="line"><span class="comment"># 1 "&lt;command-line&gt;" 2</span></span><br><span class="line"><span class="comment"># 1 "hello.c"</span></span><br><span class="line"><span class="comment"># 1 "foo.h" 1</span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">struct foo_struct &#123;</span><br><span class="line">int a;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="comment"># 2 "hello.c" 2</span></span><br><span class="line">int main(int argc, char * argv[])</span><br><span class="line">&#123;</span><br><span class="line"> int result;</span><br><span class="line"> int r = <span class="number">5</span>;</span><br><span class="line"></span><br><span class="line"> result = <span class="number">3.1415926</span> * r * r;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>根据预编译后的结果可见，典型的预编译指令按照如下方式进行处理：<br>1.文件包含<br>文件包含命令指示预编译器将一个源文件的内容全部复制到当前源文件中。在上面的代码中，hello.c使用#include指示预编译器包含文件foo.h。而在预处理的输出文件hello.i中，结构体foo_struct的定义确实已经被复制到了文件hello.i中，也就是说，文件foo.h中的内容被包含到了hello.i中。<br>2.宏定义<br>宏可以提高程序的通用性和易读性，减少不一致性和输入错误，便于维护。在预处理过程中，预编译器将宏名替换为具体的值。比如，在hello.c的main函数中，经过预处理后，宏名PI已被替换为具体的值。<br>3.条件编译<br>在大多数情况下，源程序中的所有语句都参加编译，但有的时候用户希望按照一定的条件去编译源程序的不同部分，这时可以使用条件编译。比如在main函数中，当定义了变量AREA时，编译器将编译#ifdef块的代码，否则编译#else块的代码。在上面代码中，因为在foo.h中定义了AREA，所以，在经过预处理的文件hello.i中，条件编译指令中的#else块的代码从源代码中被删除了，只保留了#ifdef块的代码。</p>
+		<p>uboot顶层目录下有30多个子目录，分别存放和管理不同的源程序。这些目录中存放的文件有其规则，可以分为3类。<br>第一类目录与处理器体系结构或开发板硬件直接相关<br>第二类目录是一些通用的函数或驱动程序<br>第三类目录是uboot的应用程序，工具和文档</p>
+<p>board： 平台依赖  存放电路板相关的目录文件，如RPXlite，smdk2410，sc520_cdp等目录<br>cpu  ： 平台依赖  存放cpu相关的目录文件，如mpc8xxx，ppc4xx，arm720t，arm920t，xscale，i386等目录<br>lib_xxx：平台依赖 与体系结构相关的库文件，如与arm相关的库放在lib_arm中<br>include ：通用 u-boot使用的头文件，还有支持各种硬件平台的汇编文件，系统的配置文件和支持文件系统的文件。该目录下的configs目录中有与开发板相关的配置头文件<br>common ： 通用 实现u-boot命令行下支持的命令，每一条命令都对应一个文件。例如bootm命令对应的就是cmd_bootm.c<br>lib_generic: 通用 通用库函数的实现<br>net: 通用 与网络协议栈相关的代码，BOOTP，TFTP，RARP和NFS文件系统的实现<br>fs： 通用 支持的文件系统，如cramfs，fat，fdos，jffs2和registerfs<br>drivers： 通用 u-boot支持的设备驱动程序都放在该目录中，如各种网卡，支持CFI的Flash，串口和USB等<br>disk： 通用 对磁盘的支持<br>doc：文档 文档目录 u-boot有非常完善的文档，推荐大家参考阅读<br>tools： 通用 声场u-boot的工具，如mkimage，crc等<br>examples：应用例程 一些独立运行的应用程序的例子，如helloworld</p>
   
 	</div>
 		<footer class="article-footer clearfix">
@@ -105,14 +104,14 @@
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/toolchain/">toolchain</a>
+  <a class="article-category-link" href="/categories/uboot/">uboot</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://yoursite.com/2015/01/18/预编译/" data-title="预编译 | 春暖花开" data-tsina="null" class="share clearfix">
+  <div data-url="http://yoursite.com/2016/02/21/uboot源码结构/" data-title="uboot源码结构 | 春暖花开" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -121,19 +120,11 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2015/01/19/编译/" title="编译">
-  <strong>PREVIOUS:</strong><br/>
-  <span>
-  编译</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2015/01/14/The-process-of-compile/"  title="编译过程">
+<a href="/2016/02/02/uboot介绍/"  title="uboot介绍-1">
  <strong>NEXT:</strong><br/> 
- <span>编译过程
+ <span>uboot介绍-1
 </span>
 </a>
 </div>
@@ -143,7 +134,7 @@
 	
 <section class="comment">
 	
-	<div class="ds-thread" data-title="预编译" data-thread-key="预编译" data-author-key="haichunzhao" data-url="http://yoursite.com/post/预编译"></div>
+	<div class="ds-thread" data-title="uboot源码结构" data-thread-key="uboot源码结构" data-author-key="haichunzhao" data-url="http://yoursite.com/post/uboot源码结构"></div>
 	
 </section>
 
