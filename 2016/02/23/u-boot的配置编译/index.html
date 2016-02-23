@@ -7,12 +7,12 @@
   <meta name="360-site-verification" content="67fbcc5a67f4c65c057315b28fa0b2c8" />
 <meta name="google-site-verification" content="2GzxQ0VtXwTSUdmGm6DzcmhTzM_I9QmzCb_pzpMzD88" />
   
-    <title>编译过程 | 春暖花开</title>
+    <title>u-boot的配置编译 | 春暖花开</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=3, minimum-scale=1">
     
     <meta name="author" content="haichunzhao">
     
-    <meta name="description" content="在Linux系统上，通常，只需使用gcc就可以完成整个编译过程。但不要被gcc的名字误导，事实上，gcc并不是一个编译器，而是一个驱动程序。在整个编译过程中，gcc就像一个导演一样，编译过程中的每一个环节由具体的组件负责，如编译过程由cc1负责，汇编过程由as负责，链接过程由ld负责。123void">
+    <meta name="description" content="u-boot的源码是通过GNU Makefile组织编译的。顶层目录下的Makefile完成对开发板的整体配置，然后递归调用各级子目录下的Makefile，最后把所有编译通过的程序链接成u-boot镜像。下面将以S3C2410处理器公板smdk2410为例，介绍uboot的配置编译方法，并简单分析其">
     
     
     
@@ -74,15 +74,15 @@
 		<header class="article-info clearfix">
   <h1 itemprop="name">
     
-      <a href="/2015/01/14/The-process-of-compile/" title="编译过程" itemprop="url">编译过程</a>
+      <a href="/2016/02/23/u-boot的配置编译/" title="u-boot的配置编译" itemprop="url">u-boot的配置编译</a>
   </h1>
   <p class="article-author">By
     
       <a href="http://yoursite.com" title="haichunzhao">haichunzhao</a>
     </p>
   <p class="article-time">
-    <time datetime="2015-01-14T13:05:25.000Z" itemprop="datePublished">Jan 14 2015</time>
-    更新日期:<time datetime="2015-01-19T13:24:15.000Z" itemprop="dateModified">Jan 19 2015</time>
+    <time datetime="2016-02-23T13:08:13.000Z" itemprop="datePublished">Feb 23 2016</time>
+    更新日期:<time datetime="2016-02-23T13:44:22.000Z" itemprop="dateModified">Feb 23 2016</time>
     
   </p>
 </header>
@@ -91,34 +91,33 @@
 		
 		<div id="toc" class="toc-article">
 			<strong class="toc-title">文章目录</strong>
-		
+		<ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#configuration_written_to_-config"><span class="toc-number">1.</span> <span class="toc-text">configuration written to .config</span></a></li></ol>
 		</div>
 		
-		<p>在Linux系统上，通常，只需使用gcc就可以完成整个编译过程。但不要被gcc的名字误导，事实上，gcc并不是一个编译器，而是一个驱动程序。在整个编译过程中，gcc就像一个导演一样，编译过程中的每一个环节由具体的组件负责，如编译过程由cc1负责，汇编过程由as负责，链接过程由ld负责。<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">void  main()&#123;</span><br><span class="line">printf(<span class="string">"hello,world!\n"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>我们可以通过传递参数“-v”给gcc来观察一个完整的编译过程中包含的步骤，下面是典型的gcc编译过程中的输出信息：<br>zhaohc@spring:~$ gcc -v main.c<br>…<br> /usr/lib/gcc/i686-linux-gnu/4.8/<strong>cc1</strong> -quiet -v -imultiarch i386-linux-gnu main.c -quiet -dumpbase main.c -mtune=generic -march=i686 -auxbase main -version -fstack-protector -Wformat -Wformat-security -o /tmp/ccU5Uy1p.s<br>…<br> <strong>as</strong> -v –32 -o /tmp/ccRXSoqU.o /tmp/ccU5Uy1p.ss<br>…<br> /usr/lib/gcc/i686-linux-gnu/4.8/<strong>collect2</strong> –sysroot=/ –build-id –eh-frame-hdr -m elf_i386 –hash-style=gnu<br>–as-needed -dynamic-linker /lib/ld-linux.so.2 -z relro<br>/usr/lib/gcc/i686-linux-gnu/4.8/../../../i386-linux-gnu/crt1.o<br>/usr/lib/gcc/i686-linux-gnu/4.8/../../../i386-linux-gnu/crti.o<br>/usr/lib/gcc/i686-linux-gnu/4.8/crtbegin.o<br>-L/usr/lib/gcc/i686-linux-gnu/4.8<br>-L/usr/lib/gcc/i686-linux-gnu/4.8/../../../i386-linux-gnu<br>-L/usr/lib/gcc/i686-linux-gnu/4.8/../../../../lib -L/lib/i386-linux-gnu<br>-L/lib/../lib -L/usr/lib/i386-linux-gnu<br>-L/usr/lib/../lib -L/usr/lib/gcc/i686-linux-gnu/4.8/../../.. /tmp/ccRXSoqU.o<br>-lgcc –as-needed -lgcc_s –no-as-needed -lc -lgcc –as-needed -lgcc_s –no-as-needed<br>/usr/lib/gcc/i686-linux-gnu/4.8/crtend.o<br>/usr/lib/gcc/i686-linux-gnu/4.8/../../../i386-linux-gnu/crtn.o<br>根据gcc的输出可见，对于一个C程序来说，从源代码构建出可执行程序经过了三个过程：<br>1.编译<br>gcc调用编译器cc1进行编译，产生的汇编代码保存在目录tmp下的文件ccU5Uy1p.s中。<br>2.汇编<br>gcc调用汇编器as，汇编编译过程产生汇编文件ccU5Uy1p.ss，产生的目标文件保存在目录tmp下的文件ccRXSoqU.o中。<br>3.链接<br>gcc并没有如我们想象的那样直接调用ld进行链接，而是调用collect2进行链接，实际上，collect2只是一个辅助程序，最终它将调用链接器ld完成真正的链接过程。举个例子，对于C++程序来说，在执行main函数前，全局静态对象必须构造完成。也就是说，在main之前程序需要进行一些必要的初始化，gcc就是使用collect2安排初始化过程中如何调用各个初始化函数的。根据链接过程可见，除了main.c对应的目标文件ccRXSoqU.o外，ld也链接了libc，libgcc等库，以及所谓的包含启动代码的启动文件，包括<br>crt1.o,crti.o,crtbegin.o,crtend.o,crtn.o.<br>事实上，对于C程序来说，编译过程也可以拆分为两个阶段：预编译和编译。所以，软件构建过程通常分为四个阶段：预编译，编译，汇编以及链接。</p>
-<p>在接下来讨论编译过程的章节中，将以下面的程序为例：<br>foo1.c:<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">int foo1 = <span class="number">10</span>;</span><br><span class="line"></span><br><span class="line">void foo1_func()</span><br><span class="line">&#123;</span><br><span class="line">    int ret = foo1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>foo2.c:<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">int foo2 = <span class="number">20</span>;</span><br><span class="line"></span><br><span class="line">void foo2_func(int x)</span><br><span class="line">&#123;</span><br><span class="line">    int ret = foo2;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
-<p>hello.c:<br><figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#include &lt;stdio.h&gt;</span></span><br><span class="line"></span><br><span class="line">extern int foo2;</span><br><span class="line"></span><br><span class="line">int main(int argc, char *argv[])</span><br><span class="line">&#123;</span><br><span class="line">    foo2 = <span class="number">5</span>;</span><br><span class="line">    foo2_func(<span class="number">50</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+		<p>u-boot的源码是通过GNU Makefile组织编译的。顶层目录下的Makefile完成对开发板的整体配置，然后递归调用各级子目录下的Makefile，最后把所有编译通过的程序链接成u-boot镜像。下面将以S3C2410处理器公板smdk2410为例，介绍uboot的配置编译方法，并简单分析其原理。<br>1.基本的配置编译方法<br>配置编译uboot的方法非常简单，只需在解压并进入源码包后，在uboot顶层目录中执行如下命令：</p>
+<p>#make <boardname>_defconfig</boardname></p>
+<p>#make<br>第一个命令用来配置uboot，其中<boardname>使用具体的开发板名称代替。例如，用smdk2410替代后就是“make smdk2410_defconfig”。执行第二个命令后开始编译过程。<br>2.顶层目录下的Makefile<br>执行配置uboot命令：make smdk2410_defconfig，生成相应的配置文件。<br>haichunzhao@sea:~/Downloads/u-boot-2016.03-rc2$ make smdk2410_defconfig<br>  HOSTCC  scripts/basic/fixdep<br>  HOSTCC  scripts/kconfig/conf.o<br>  HOSTCC  scripts/kconfig/zconf.tab.o<br>  HOSTLD  scripts/kconfig/conf<br>#</boardname></p>
+<h1 id="configuration_written_to_-config"><a href="#configuration_written_to_-config" class="headerlink" title="configuration written to .config"></a>configuration written to .config</h1><p>#<br>配置文件中，定义了硬件平台相关的参数：<br>CONFIG_SYS_ARCH=”arm”<br>CONFIG_SYS_CPU=”arm920t”<br>CONFIG_SYS_SOC=”s3c24x0”<br>CONFIG_SYS_VENDOR=”samsung”<br>CONFIG_SYS_BOARD=”smdk2410”<br>CONFIG_SYS_CONFIG_NAME=”smdk2410”<br>smdk2410平台相关目录如下：<br>board/samsung/smdk2410/<br>cpu/arm920t/<br>cpu/arm920t/s3c2410/<br>lib_arm/<br>include/asm-arm/<br>include/configs/smdk2410/</p>
+<p>3.开发板配置头文件<br>除了编译顶层Makefile外，还要在移植时为开发板定义配置选项或参数。这个头文件是include/configs/<boardname>.h。<boardname>用相应的BOARD宏定义代替。<br>这些头定义中定义的选项或参数以CONFIG_为前缀，用来选择处理器，设备接口，命令，属性等。例如：</boardname></boardname></p>
+<p>#define CONFIG_ARM920T 1</p>
+<p>4.编译结果<br>编译完成后，可以得到uboot各种格式的映像文件和符号表。<br>system.map  u-boot映像的符号表<br>u-boot.bin  u-boot映像原始二进制格式<br>u-boot      u-boot映像的ELF格式<br>u-boot.srec u-boot映像的S-Record格式</p>
+<p>u-boot的三种映像格式都可以烧写到flash中，但需要看加载器是否能识别这些格式。一般u-boot.bin最为常用，直接按照二进制格式下载，并且按照绝对地址烧写到flash中即可。</p>
+<p>5.u-boot工具<br>在tools目录下会生成u-boot工具<br>bmp_logo     制作logo的位图结构体<br>img2srec     转换S-Record格式映像<br>envcrc       校验u-boot内部的环境变量<br>mkimage      制作uImage格式镜像<br>gen_eth_addr 生成以太网口MAC地址<br>updater      u-boot自动更新升级工具</p>
   
 	</div>
 		<footer class="article-footer clearfix">
 
-  <div class="article-tags">
-  
-  <span></span> <a href="/tags/gcc/">gcc</a>
-  </div>
-
 
 <div class="article-categories">
   <span></span>
-  <a class="article-category-link" href="/categories/toolchain/">toolchain</a>
+  <a class="article-category-link" href="/categories/uboot/">uboot</a>
 </div>
 
 
 
 <div class="article-share" id="share">
 
-  <div data-url="http://yoursite.com/2015/01/14/The-process-of-compile/" data-title="编译过程 | 春暖花开" data-tsina="null" class="share clearfix">
+  <div data-url="http://yoursite.com/2016/02/23/u-boot的配置编译/" data-title="u-boot的配置编译 | 春暖花开" data-tsina="null" class="share clearfix">
   </div>
 
 </div>
@@ -127,19 +126,11 @@
 	
 <nav class="article-nav clearfix">
  
- <div class="prev" >
- <a href="/2015/01/18/预编译/" title="预编译">
-  <strong>PREVIOUS:</strong><br/>
-  <span>
-  预编译</span>
-</a>
-</div>
-
 
 <div class="next">
-<a href="/2015/01/14/begin/"  title="begin">
+<a href="/2016/02/21/uboot源码结构/"  title="uboot源码结构">
  <strong>NEXT:</strong><br/> 
- <span>begin
+ <span>uboot源码结构
 </span>
 </a>
 </div>
@@ -149,7 +140,7 @@
 	
 <section class="comment">
 	
-	<div class="ds-thread" data-title="编译过程" data-thread-key="The-process-of-compile" data-author-key="haichunzhao" data-url="http://yoursite.com/post/The-process-of-compile"></div>
+	<div class="ds-thread" data-title="u-boot的配置编译" data-thread-key="u-boot的配置编译" data-author-key="haichunzhao" data-url="http://yoursite.com/post/u-boot的配置编译"></div>
 	
 </section>
 
@@ -159,7 +150,7 @@
 
   <div id="toc" class="toc-aside">
   <strong class="toc-title">文章目录</strong>
-  
+  <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#configuration_written_to_-config"><span class="toc-number">1.</span> <span class="toc-text">configuration written to .config</span></a></li></ol>
   </div>
 
 <div id="asidepart">
